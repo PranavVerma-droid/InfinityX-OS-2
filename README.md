@@ -8,7 +8,13 @@ You can Visit V1 [Here](https://github.com/PranavVerma-droid/InfinityX-OS). (Mig
 <i>This Code is [Licensed](LICENSE)</i>
 
 ## Scripts
-All Scripts can be found in the [scripts](scripts) folder. (Only for Bash)
+All Scripts can be found in the [scripts](scripts) folder. (Only for Debian - Bash)
+
+Install Dependencies: [dependencies.sh](scripts/dependencies.sh) <br>
+Compile OS: [compile.sh](scripts/compile.sh) <br>
+Run OS: [run.sh](scripts/run.sh)<br>
+Cleanup: [cleanup.sh](scripts/cleanup.sh)<br>
+
 
 ## Releases
 Check [Releases](https://github.com/PranavVerma-droid/InfinityX-OS-2) for the latest compiled OS.

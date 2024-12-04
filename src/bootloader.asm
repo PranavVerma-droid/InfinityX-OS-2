@@ -1,5 +1,8 @@
-[org 0x7c00]            ; BIOS loads from this address
+[org 0x7c00]            ; BIOS load address
 [bits 16]               ; 16-bit real mode (Fuck this shit)
+
+KERNEL_OFFSET equ 0x1000     ; kernel load address
+MEMORY_MAP_ADDR equ 0x5000   ; mem map storage address
 
 section .text
     global start
@@ -23,9 +26,17 @@ start:
     mov si, msg2
     call print_string
 
-    ; GDT Load
-    lgdt [gdt_descriptor]
     
+    call enable_a20             ; en A20
+    call get_memory_map         ; get mem map
+    
+    
+    mov si, msg_load_kernel     ; kernel loading [TEMP]
+    call print_string
+    call load_kernel
+    lgdt [gdt_descriptor]       ; GDT loading
+
+
     cli
     mov eax, cr0
     or eax, 1
@@ -68,6 +79,42 @@ print_string:
     popa
     ret
 
+enable_a20:
+    in al, 0x92
+    or al, 2
+    out 0x92, al
+    ret
+
+get_memory_map:
+    mov di, MEMORY_MAP_ADDR
+    xor ebx, ebx
+    mov edx, 0x534D4150
+    mov eax, 0xE820
+    mov [es:di + 20], dword 1
+    mov ecx, 24
+    int 0x15
+    jc .failed
+    ret
+.failed:
+    mov si, msg_mm_failed
+    call print_string
+    ret
+
+load_kernel:
+    mov ah, 0x02                ; reat sec.
+    mov al, 32                  ; no. of sectors
+    mov ch, 0                   ; cyl. no.
+    mov dh, 0                   ; head n.
+    mov cl, 2                   ; start -> sec 2
+    mov dl, [boot_drive]
+    mov bx, KERNEL_OFFSET
+    int 0x13
+    jc .disk_error
+    ret
+.disk_error:
+    mov si, msg_disk_error
+    call print_string
+    jmp $
 
 gdt_start:
     dq 0               ; GDT
@@ -101,5 +148,13 @@ boot_drive: db 0
 msg1: db 'InfinityX OS V2 - Booting in Protected Mode...', 13, 10, 0
 msg2: db 'Made by Pranav Verma.', 13, 10, 0
 
+
+msg_load_kernel: db 'Loading kernel...', 13, 10, 0
+msg_disk_error: db 'Disk read error!', 13, 10, 0
+msg_mm_failed: db 'Memory map failed!', 13, 10, 0
+
 times 510-($-$$) db 0
 dw 0xaa55
+
+section .stage2
+    times 512 db 0
