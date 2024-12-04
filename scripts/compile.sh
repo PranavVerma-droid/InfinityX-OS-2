@@ -1,19 +1,10 @@
 #!/bin/bash
 
-cd ../src/
+mkdir -p ../build
 
-mkdir -p ../dist
+nasm -f bin ../src/bootloader.asm -o ../build/bootloader.bin
 
-nasm -f bin main.asm -o bootloader.bin
+dd if=/dev/zero of=../build/os.img bs=1024 count=1440
+dd if=../build/bootloader.bin of=../build/os.img conv=notrunc
 
-mv bootloader.bin ../dist/
-
-cd ../dist/
-
-# Create a blank hard disk image
-dd if=/dev/zero of=os.img bs=512 count=2880
-
-# Copy the boot sector into the hard disk image
-dd if=bootloader.bin of=os.img conv=notrunc
-
-echo "OS compiled successfully to ../dist/os.img"
+echo "Build complete! Run using the Run Script."
