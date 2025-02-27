@@ -23,12 +23,6 @@ jobs:
         components: rust-src, llvm-tools-preview
         target: x86_64-unknown-none
     
-    - name: Executable Script
-      run: chmod +x scripts/install.sh
-    
-    - name: Install Dependencies
-      run: ./scripts/install.sh
-      
     - name: Install bootimage
       run: cargo install bootimage --verbose
       
@@ -42,6 +36,3 @@ jobs:
         path: target/x86_64-infinityx/release/bootimage-os.bin
         compression-level: 9
         retention-days: 5
-        
-    - name: Clean
-      run: cargo clean
