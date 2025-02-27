@@ -6,23 +6,14 @@ check_package() {
 }
 
 declare -A PACKAGE_MAP=(
-    ["build-essential"]="gcc"
     ["qemu-system-x86"]="qemu-system-x86_64"
-    ["binutils"]="as"
-    ["nasm"]="nasm"
-    ["gcc"]="gcc"
-    ["gdb"]="gdb"
-    ["make"]="make"
-    ["git"]="git"
-    ["xorriso"]="xorriso"
-    ["mtools"]="mcopy"
-    ["curl"]="curl"
+    ["build-essential"]="gcc"
 )
 
 echo "Updating package lists..."
 sudo apt-get update
 
-echo "Installing packages..."
+echo "Installing basic dependencies..."
 for pkg in "${!PACKAGE_MAP[@]}"; do
     if ! check_package "$pkg"; then
         echo "Installing $pkg..."
@@ -32,27 +23,54 @@ for pkg in "${!PACKAGE_MAP[@]}"; do
     fi
 done
 
+if ! command -v rustc >/dev/null 2>&1; then
+    echo "Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source $HOME/.cargo/env
+else
+    echo "Rust is already installed"
+fi
+
+echo "Installing required Rust components..."
+rustup component add rust-src
+rustup component add llvm-tools-preview
+rustup override set nightly
+rustup target add x86_64-unknown-none
+
+echo "Installing cargo-bootimage..."
+cargo install bootimage
+
 echo "Cleaning up..."
 sudo apt-get autoremove -y
 sudo apt-get clean
 
 echo "Verifying installations..."
 MISSING=0
+
 for pkg in "${!PACKAGE_MAP[@]}"; do
     CMD="${PACKAGE_MAP[$pkg]}"
     if ! command -v "$CMD" >/dev/null 2>&1; then
         echo "⚠️ Warning: $pkg ($CMD) is not properly installed"
-        echo "Attempting to fix..."
-        sudo apt-get install --reinstall -y "$pkg"
-        if ! command -v "$CMD" >/dev/null 2>&1; then
-            MISSING=1
-        fi
+        MISSING=1
     fi
 done
 
+if ! command -v rustc >/dev/null 2>&1; then
+    echo "⚠️ Warning: Rust is not properly installed"
+    MISSING=1
+fi
+
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "⚠️ Warning: Cargo is not properly installed"
+    MISSING=1
+fi
+
 if [ $MISSING -eq 0 ]; then
     echo "All dependencies installed successfully!"
+    echo "Rust version: $(rustc --version)"
+    echo "Cargo version: $(cargo --version)"
+    echo "QEMU version: $(qemu-system-x86_64 --version)"
 else
-    echo "Some dependencies are still missing. Try running:"
-    echo "sudo apt-get update && sudo apt-get install -y ${!PACKAGE_MAP[*]}"
+    echo "Some dependencies are missing. Please check the error messages above."
+    exit 1
 fi
