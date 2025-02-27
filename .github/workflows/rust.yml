@@ -25,10 +25,12 @@ jobs:
       run: cargo bootimage --release --verbose
       
     - name: Upload Bootable Image
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: os-image
         path: target/x86_64-infinityx/release/bootimage-os.bin
+        compression-level: 9
+        retention-days: 5
         
     - name: Clean
       run: cargo clean
