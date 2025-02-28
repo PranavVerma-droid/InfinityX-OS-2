@@ -28,35 +28,62 @@ struct MemoryMapTag {
 }
 
 pub fn init() -> ! {
+    clear_screen();
+    print_at(0, 0, "InfinityX OS V2 Bootloader Starting...");
+    print_at(0, 1, "--------------------------------");
+    
+    let mut current_line = 3;
+    print_at(0, current_line, "[1/7] Initializing boot info structure...");
     let mut boot_info = BootInfo {
         memory_map_tag: None,
         boot_stage: BootStage::Start,
     };
-
-    clear_screen();
-    print_at(0, 0, "InfinityX OS V2 Bootloader");
+    current_line += 1;
     
     // CPU Check
+    print_at(0, current_line, "[2/7] Checking CPU compatibility...");
     boot_info.boot_stage = BootStage::CPUCheck;
     if !check_cpu() {
-        boot_error("CPU requirements not met");
+        boot_error("CPU requirements not met - CPUID not available");
     }
-    print_at(0, 1, "CPU Check: OK");
+    print_at(60, current_line, "[ OK ]");
+    current_line += 1;
 
     // Memory Detection
+    print_at(0, current_line, "[3/7] Detecting system memory...");
     boot_info.boot_stage = BootStage::MemoryInit;
     if let Err(_) = detect_memory(&mut boot_info) {
-        boot_error("Memory detection failed");
+        boot_error("Memory detection failed - Cannot access memory map");
     }
-    print_at(0, 2, "Memory Detection: OK");
+    print_at(60, current_line, "[ OK ]");
+    current_line += 1;
 
-    // Setup GDT and IDT
+    // GDT Setup
+    print_at(0, current_line, "[4/7] Setting up Global Descriptor Table...");
     setup_gdt();
-    setup_idt();
-    print_at(0, 3, "Tables Initialized: OK");
+    print_at(60, current_line, "[ OK ]");
+    current_line += 1;
 
+    // IDT Setup
+    print_at(0, current_line, "[5/7] Setting up Interrupt Descriptor Table...");
+    setup_idt();
+    print_at(60, current_line, "[ OK ]");
+    current_line += 1;
+
+    // Final Boot Stage
+    print_at(0, current_line, "[6/7] Finalizing boot sequence...");
     boot_info.boot_stage = BootStage::Complete;
-    print_at(0, 5, "Boot Complete - Loading Kernel...");
+    print_at(60, current_line, "[ OK ]");
+    current_line += 1;
+
+    // Kernel Loading
+    print_at(0, current_line, "[7/7] Loading kernel into memory...");
+    current_line += 2;
+    print_at(0, current_line, "================================");
+    current_line += 1;
+    print_at(0, current_line, "Boot sequence completed successfully!");
+    current_line += 1;
+    print_at(0, current_line, "Transferring control to kernel...");
 
     load_kernel()
 }
@@ -81,7 +108,8 @@ fn check_cpu() -> bool {
         );
 
         core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
-        flags1 != flags2
+        let result = flags1 != flags2;
+        result
     }
 }
 
@@ -125,14 +153,16 @@ fn print_at(x: usize, y: usize, msg: &str) {
 }
 
 fn boot_error(msg: &str) -> ! {
-    print_at(0, VGA_HEIGHT - 2, "Boot Error:");
-    print_at(2, VGA_HEIGHT - 1, msg);
+    print_at(0, VGA_HEIGHT - 3, "=====================================");
+    print_at(0, VGA_HEIGHT - 2, "BOOT ERROR - SYSTEM HALTED");
+    print_at(0, VGA_HEIGHT - 1, msg);
     loop {}
 }
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    print_at(0, VGA_HEIGHT - 2, "KERNEL PANIC!");
-    print_at(2, VGA_HEIGHT - 1, "System halted.");
+    print_at(0, VGA_HEIGHT - 3, "=====================================");
+    print_at(0, VGA_HEIGHT - 2, "KERNEL PANIC - SYSTEM HALTED");
+    print_at(0, VGA_HEIGHT - 1, "Fatal error occurred during boot");
     loop {}
 }
