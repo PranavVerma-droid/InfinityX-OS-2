@@ -5,6 +5,11 @@ edition = "2021"
 
 [dependencies]
 bootloader = "0.9"
+x86_64 = "0.14"
+bit_field = "0.10"
+
+[features]
+default = []
 
 [[bin]]
 name = "os"
@@ -15,4 +20,4 @@ bench = false
 
 [profile.release]
 panic = "abort"
-lto = true
+lto = "thin"

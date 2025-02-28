@@ -5,6 +5,5 @@ mod bootloader;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    bootloader::init();
-    loop {}
+    bootloader::init()
 }
