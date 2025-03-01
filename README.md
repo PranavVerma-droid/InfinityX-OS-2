@@ -20,18 +20,18 @@ Install all Dependencies using the provided installer script (Debian only):
 Run the OS:
 ```bash
 cargo clean
-cargo run --release
+cargo run
 ```
 
 ## Build and Run the OS (Manual):
 Build using the `bootimage` command:
 ```bash
 cargo clean
-cargo bootimage --release
+cargo bootimage
 ```
-It will be created at `target/x86_64-infinityx/release/bootimage-os.bin`
+It will be created at `target/x86_64-infinityx/debug/bootimage-os.bin`
 
 Run a standalone `.bin` file:
 ```bash
-qemu-system-x86_64 -drive format=raw,file=target/x86_64-infinityx/release/bootimage-os.bin
+qemu-system-x86_64 -drive format=raw,file=target/x86_64-infinityx/debug/bootimage-os.bin
 ```

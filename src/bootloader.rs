@@ -1,6 +1,7 @@
 use core::panic::PanicInfo;
 use core::arch::asm;
 use crate::logging::{self};
+use crate::memory;
 
 #[allow(dead_code)]
 struct BootInfo {
@@ -14,6 +15,7 @@ enum BootStage {
     Start,
     CPUCheck,
     MemoryInit,
+    PagingInit,
     Complete,
     Error,
 }
@@ -56,7 +58,11 @@ pub fn init() -> ! {
 
     logging::info("Setting up Interrupt Descriptor Table...");
     setup_idt();
- 
+    
+    logging::info("Setting up paging...");
+    boot_info.boot_stage = BootStage::PagingInit;
+    setup_paging();
+
     logging::info("Finalizing boot sequence...");
     boot_info.boot_stage = BootStage::Complete;
 
@@ -118,6 +124,11 @@ fn setup_idt() {
     logging::debug("Setting up IDT...");
     logging::warn("IDT loading not yet implemented");
     //TODO: IDT Loading Logic
+}
+
+fn setup_paging() {
+    logging::debug("Initializing memory paging...");
+    memory::init();
 }
 
 fn load_kernel() -> ! {

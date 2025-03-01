@@ -20,4 +20,4 @@ bench = false
 
 [profile.release]
 panic = "abort"
-lto = "thin"
+lto = "off"
